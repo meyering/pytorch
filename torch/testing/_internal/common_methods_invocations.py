@@ -13213,6 +13213,11 @@ op_db: list[OpInfo] = [
            supports_fwgrad_bwgrad=True,
            gradcheck_nondet_tol=GRADCHECK_NONDET_TOL,
            sample_inputs_func=sample_inputs_addmm,
+           decorators=[
+               DecorateInfo(
+                   toleranceOverride({torch.float64: tol(atol=9e-6, rtol=8e-7)}),
+                   'TestCommon', 'test_numpy_ref', device_type='xpu'),
+           ],
            skips=(
                # Issue with conj and torch dispatch, see https://github.com/pytorch/pytorch/issues/82479
                DecorateInfo(
@@ -13239,6 +13244,11 @@ op_db: list[OpInfo] = [
            gradcheck_nondet_tol=GRADCHECK_NONDET_TOL,
            autodiff_nonfusible_nodes=['aten::add', 'aten::mm'],
            sample_inputs_func=partial(sample_inputs_addmm, alpha=1, beta=1),
+           decorators=[
+               DecorateInfo(
+                   toleranceOverride({torch.float64: tol(atol=3e-7, rtol=5e-7)}),
+                   'TestMathBits', 'test_neg_view', device_type='xpu'),
+           ],
            skips=(
                # Issue with conj and torch dispatch, see https://github.com/pytorch/pytorch/issues/82479
                DecorateInfo(
@@ -13282,6 +13292,7 @@ op_db: list[OpInfo] = [
            gradcheck_fast_mode=True,
            supports_forward_ad=True,
            supports_fwgrad_bwgrad=True,
+           sample_inputs_func=sample_inputs_addbmm,
            decorators=[
                DecorateInfo(
                    toleranceOverride({torch.float32: tol(atol=1.3e-05, rtol=1.3e-05),
@@ -13316,9 +13327,7 @@ op_db: list[OpInfo] = [
                # AssertionError: RuntimeError not raised : Expected RuntimeError
                # when doing an unsafe cast from a result of dtype torch.float32
                # into an out= with dtype torch.long
-               DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_out', dtypes=(torch.float32,), device_type='mps'),
-           ),
-           sample_inputs_func=sample_inputs_addbmm),
+               DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_out', dtypes=(torch.float32,), device_type='mps'))),
     OpInfo('baddbmm',
            dtypes=all_types_and_complex_and(torch.bfloat16, torch.float16),
            dtypesIfCUDA=floating_types_and(torch.float16, torch.complex64, torch.complex128,
@@ -14227,13 +14236,12 @@ op_db: list[OpInfo] = [
            dtypesIfHpu=custom_types(torch.float32, torch.bfloat16, torch.int32),
            supports_forward_ad=True,
            supports_fwgrad_bwgrad=True,
+           sample_inputs_func=sample_inputs_cumulative_ops,
            skips=(
                # cumsum does not handle correctly out= dtypes
                DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_out'),
                # The following dtypes did not work in forward but are listed by the OpInfo: {torch.bool}
-               DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_dtypes', device_type='mps'),
-           ),
-           sample_inputs_func=sample_inputs_cumulative_ops),
+               DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_dtypes', device_type='mps'))),
     OpInfo('cumprod',
            dtypes=all_types_and_complex_and(torch.float16, torch.bfloat16),
            dtypesIfHpu=custom_types(torch.float32, torch.bfloat16),
@@ -17058,6 +17066,10 @@ op_db: list[OpInfo] = [
                    toleranceOverride({torch.float16: tol(atol=5e-3, rtol=1e-3)}),
                    'TestInductorOpInfo', 'test_comprehensive',
                ),
+               DecorateInfo(
+                   toleranceOverride({torch.float32: tol(atol=1e-4, rtol=5e-6)}),
+                   'TestCompositeCompliance', 'test_backward', device_type="xpu"
+               ),
            ),
            skips=(
                # RuntimeError: !lhs.isAliasOf(rhs) INTERNAL ASSERT FAILED at
@@ -17917,6 +17929,11 @@ op_db: list[OpInfo] = [
                DecorateInfo(unittest.skip, "TestCommon", "test_fake_crossref_backward_amp", device_type="cuda", dtypes=(torch.float32,), active_if=IS_LINUX or TEST_WITH_ROCM or TEST_WITH_TORCHINDUCTOR),
                # https://github.com/pytorch/pytorch/issues/159151
                DecorateInfo(unittest.skip, "TestCommon", "test_fake_crossref_backward_no_amp", device_type="cuda", dtypes=(torch.float32,), active_if=IS_LINUX or TEST_WITH_ROCM),
+               # https://github.com/intel/torch-xpu-ops/issues/1963
+               DecorateInfo(unittest.skip("Skipped!"), 'TestFakeTensor', 'test_fake_crossref_backward_amp',
+                            device_type='xpu', dtypes=[torch.float32]),
+               DecorateInfo(unittest.skip("Skipped!"), 'TestFakeTensor', 'test_fake_crossref_backward_no_amp',
+                            device_type='xpu', dtypes=[torch.float32]),
            ),
            # Runs very slowly on slow gradcheck - alternatively reduce input sizes
            gradcheck_fast_mode=True,
@@ -20420,6 +20437,9 @@ op_db: list[OpInfo] = [
                             device_type='mps', dtypes=[torch.float32]),
                DecorateInfo(unittest.skip("Skipped!"), 'TestJit', 'test_variant_consistency_jit',
                             device_type='mps', dtypes=[torch.float32]),
+               # https://github.com/intel/torch-xpu-ops/issues/1963
+               DecorateInfo(unittest.skip("Skipped!"), 'TestFakeTensor', 'test_fake_autocast',
+                            device_type='xpu', dtypes=[torch.float32]),
            )),
     OpInfo('gather',
            dtypes=all_types_and_complex_and(torch.bool, torch.float16, torch.bfloat16),
@@ -21385,7 +21405,8 @@ op_db: list[OpInfo] = [
                # AssertionError
                DecorateInfo(unittest.skip("Skipped!"), 'TestDecomp', 'test_quick'),
                # AssertionError in CUDA variant
-               DecorateInfo(unittest.skip("Skipped!"), 'TestFakeTensor', device_type=('cuda', 'xpu')),)),
+               DecorateInfo(unittest.skip("Skipped!"), 'TestFakeTensor', device_type=('cuda', 'xpu')),
+               DecorateInfo(unittest.skip("Skipped!"), 'TestDeviceUtils', 'test_device_mode_ops'),)),
     OpInfo('bernoulli',
            op=lambda inp, *args, **kwargs:
                wrapper_set_seed(torch.bernoulli, inp, *args, **kwargs),
@@ -22096,8 +22117,9 @@ op_db: list[OpInfo] = [
            skips=(
                # "dot_xpu_mkl" not implemented for 'Long', torch-xpu-ops: #3247
                DecorateInfo(unittest.expectedFailure, "TestInductorOpInfo", "test_comprehensive",
-                            device_type="xpu", dtypes=(torch.int64,)),
-           )),
+                            device_type="xpu", dtypes=(torch.int64, torch.int32)),
+               DecorateInfo(unittest.skip("Skipped! torch-xpu-ops #3247"), 'TestCommon',
+                            'test_noncontiguous_samples', device_type='xpu', dtypes=(torch.int64,)))),
     OpInfo('tensordot',
            dtypes=all_types_and_complex_and(torch.float16, torch.bfloat16),
            dtypesIfCUDA=floating_and_complex_types_and(torch.float16, torch.bfloat16),
@@ -24633,6 +24655,7 @@ python_ref_db = [
             DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_python_ref', device_type='mps'),
             DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_python_ref_meta', device_type='mps'),
             DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_python_ref_torch_fallback', device_type='mps'),
+            DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_compare_cpu', device_type='mps'),
         ),
     ),
     PythonRefInfo(
@@ -24695,6 +24718,7 @@ python_ref_db = [
             DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_python_ref', device_type='mps'),
             DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_python_ref_meta', device_type='mps'),
             DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_python_ref_torch_fallback', device_type='mps'),
+            DecorateInfo(unittest.expectedFailure, 'TestCommon', 'test_compare_cpu', device_type='mps'),
         ),
     ),
     PythonRefInfo(

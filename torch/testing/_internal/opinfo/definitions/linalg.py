@@ -2005,7 +2005,7 @@ op_db: list[OpInfo] = [
                 unittest.expectedFailure,
                 "TestCommon",
                 "test_compare_cpu",
-                active_if=(not TEST_XPU),
+                device_type="cuda",
             ),
             # Exception: Resizing an out= argument with no elements threw a resize warning!
             DecorateInfo(
@@ -2438,6 +2438,14 @@ op_db: list[OpInfo] = [
                 "TestJit",
                 "test_variant_consistency_jit",
                 device_type="cuda",
+            ),
+            # https://github.com/intel/torch-xpu-ops/issues/1963
+            DecorateInfo(
+                unittest.skip("Skipped!"),
+                "TestFakeTensor",
+                "test_fake_autocast",
+                device_type="xpu",
+                dtypes=[torch.float32],
             ),
         ),
     ),
