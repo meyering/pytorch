@@ -1253,8 +1253,16 @@ op_db: list[OpInfo] = [
         supports_out=False,
         decorators=[skipCUDAIfNoMagma, skipCPUIfNoLapack, with_tf32_off],
         skips=(
-            # The operator 'aten::linalg_matrix_sqrth' is not implemented for MPS.
+            # The operator 'aten::linalg_matrix_sqrth' is not implemented for MPS and XPU.
             DecorateInfo(unittest.expectedFailure, "TestCommon", device_type="mps"),
+            # https://github.com/intel/torch-xpu-ops/issues/4169
+            DecorateInfo(
+                unittest.expectedFailure,
+                "TestOperators",
+                "test_grad",
+                device_type="xpu",
+                dtypes=(torch.float32,),
+            ),
         ),
     ),
     OpInfo(

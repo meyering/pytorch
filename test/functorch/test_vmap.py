@@ -3987,7 +3987,8 @@ class TestVmapBatchedGradient(Namespace.TestVmapBase):
 
     @parametrize("backend", PLATFORM_SPECIFIC_SDPA)
     def test_sdpa(self, device, backend):
-        if device == "cpu":
+        # https://github.com/intel/torch-xpu-ops/issues/3787
+        if device in ("cpu", "xpu"):
             raise unittest.SkipTest("This test is only for CUDA for now")
 
         def T(*args):
@@ -4042,7 +4043,8 @@ class TestVmapBatchedGradient(Namespace.TestVmapBase):
     @parametrize("backend", PLATFORM_SPECIFIC_SDPA)
     @parametrize("randomness", ["error", "same", "different"])
     def test_randomness(self, device, randomness, backend):
-        if device == "cpu":
+        # https://github.com/intel/torch-xpu-ops/issues/3787
+        if device in ("cpu", "xpu"):
             raise unittest.SkipTest("This test is only for CUDA for now")
 
         # xfail for cuDNN version between 9.10 and 9.13
